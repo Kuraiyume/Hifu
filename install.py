@@ -1,38 +1,53 @@
 #!/usr/bin/env python3
 import os
-import sys
 import shutil
-import stat
+import sys
+import subprocess
+import pkg_resources
+
+def install_package(package):
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip3", "install", package])
+        print(f"[+] Successfully installed '{package}'")
+    except subprocess.CalledProcessError as e:
+        print(f"[-] Error installing '{package}': {e}")
+        sys.exit(1)
 
 if os.geteuid() != 0:
     print("[-] Error: This script must be run as root (use sudo).")
     sys.exit(1)
 
-script_path = "hifu.py"
-dest_dir = "/usr/local/bin"
-dest_script = os.path.join(dest_dir, "hifu")
+SCRIPT_PATH = "hifu.py"
+DEST_DIR = "/usr/local/bin"
+DEST_SCRIPT = os.path.join(DEST_DIR, "hifu")
 
-if not os.path.isfile(script_path):
-    print(f"[-] Error: The script '{script_path}' was not found.")
+required_packages = ['termcolor', 'rstr']
+
+for package in required_packages:
+    try:
+        pkg_resources.require(package)
+        print(f"[+] '{package}' is already installed.")
+    except pkg_resources.DistributionNotFound:
+        print(f"[-] '{package}' not found. Installing...")
+        install_package(package)
+
+if not os.path.isfile(SCRIPT_PATH):
+    print(f"[-] Error: The script '{SCRIPT_PATH}' was not found.")
     sys.exit(1)
 
 try:
-    print(f"[+] Copying '{script_path}' to '{dest_dir}'")
-    shutil.copy(script_path, dest_script)
+    print(f"[+] Copying '{SCRIPT_PATH}' to '{DEST_DIR}'")
+    shutil.copy(SCRIPT_PATH, DEST_SCRIPT)
+
+    print(f"[+] Setting execute permissions for '{DEST_SCRIPT}'")
+    os.chmod(DEST_SCRIPT, 0o755)
+
+    if os.access(DEST_SCRIPT, os.X_OK):
+        print(f"[+] Installation complete. You can now use 'hifu' as a command.")
+    else:
+        print("[-] Error: The script could not be made executable.")
+        sys.exit(1)
+
 except Exception as e:
-    print(f"[-] Error: Failed to copy the script. {e}")
+    print(f"[-] Error: {e}")
     sys.exit(1)
-
-try:
-    print(f"[+] Setting execute permissions for '{dest_script}'")
-    os.chmod(dest_script, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
-except Exception as e:
-    print(f"[-] Error: Failed to set execute permissions. {e}")
-    sys.exit(1)
-
-if os.access(dest_script, os.X_OK):
-    print(f"[+] Installation complete. You can now use 'hifu' as a command.")
-else:
-    print("[-] Error: The script could not be made executable.")
-    sys.exit(1)
-

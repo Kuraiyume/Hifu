@@ -18,9 +18,9 @@ Hifu is an advanced password generation tool designed to provide users with high
     ```bash
     git clone https://github.com/Kuraiyume/Hifu
     ```
-2. Run the setup.py:
+2. Run the install.py:
     ```
-    ./setup.py
+    ./install.py
     ```
 3. Run the Hifu by typing the command 'hifu':
     ```

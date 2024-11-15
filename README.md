@@ -1,4 +1,4 @@
-# Hifu
+# Hifu: Advanced Password Generator
 
 Hifu is an advanced password generation tool designed to provide users with highly customizable and secure password options. It blends sophistication with flexibility, allowing users to craft passwords tailored to their specific needs, enhancing both security and usability in a user-friendly manner.
 

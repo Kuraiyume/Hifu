@@ -1,3 +1,5 @@
+#!/usr/bin/env python3 
+
 import argparse
 import random
 import string
@@ -5,15 +7,18 @@ import json
 import sys
 import secrets
 import re
+from termcolor import colored 
+import rstr
 
 banner = r"""
-                           ____
-    ____  ____ ___________/ __/___  _________ ____
-   / __ \/ __ `/ ___/ ___/ /_/ __ \/ ___/ __ `/ _ \
-  / /_/ / /_/ (__  |__  ) __/ /_/ / /  / /_/ /  __/
- / .___/\__,_/____/____/_/  \____/_/   \__, /\___/
-/_/                                   /____/v0.4
-                                      Kuraiyume
+.___.__  .___ ._______.____
+:   |  \ : __|:_ ____/|    |___
+|   :   || : ||   _/  |    |   |
+|   .   ||   ||   |   |    :   |
+|___|   ||   ||_. |   |        |
+    |___||___|  :/    |. _____/
+                :      :/ Kura1yume
+                       :v0.4
 """
 
 def validate_positive_int(value):
@@ -37,52 +42,36 @@ def leet_speak_conversion(custom_string):
     }
     return ''.join(leet_mapping.get(c, c) for c in custom_string)
 
-def generate_password(counts, pools, exclude_chars, prefix, suffix, total_length, secrets_generator, custom):
+def generate_password(counts, pools, exclude_chars, prefix, suffix, total_length, secrets_generator, custom, regex=None):
     """
-    Generate a password based on specified counts, total length, or custom string.
-    :param counts: Dictionary containing the count of each character type
-    :param pools: Dictionary of character pools
-    :param exclude_chars: Characters to exclude from the password
-    :param prefix: Prefix to add to the password
-    :param suffix: Suffix to add to the password
-    :param total_length: Desired total length of the password
-    :param secrets_generator: Random generator instance
-    :param custom: Custom string for leet speak conversion
-    :return: Generated password
+    Generate a password based on specified counts, total length, regex, or custom string.
     """
+    if regex:
+        return rstr.xeger(regex)
     if custom:
         return leet_speak_conversion(custom)
-    # Create a string of available characters by excluding specified characters
     available_chars = ''.join(c for c in ''.join(pools.values()) if c not in exclude_chars)
-    # Ensure there are available characters left after exclusion
     if not available_chars:
-        print("[-] No available characters left after applying exclusions.")
+        print_colored_status('[-]', "No available characters left after applying exclusions.")
         sys.exit(1)
-    # Ensure at least one character from each selected pool is present
     password_chars = []
     if total_length > 0:
         for pool in pools.values():
             if pool:
-                # Filter pool to exclude unwanted characters
                 filtered_pool = ''.join(c for c in pool if c not in exclude_chars)
                 if filtered_pool:
                     password_chars.append(secrets_generator.choice(filtered_pool))
-        # Fill the rest of the password with random characters from the combined pool
         remaining_length = total_length - len(password_chars) - len(prefix) - len(suffix)
         if remaining_length > 0:
             password_chars.extend(secrets_generator.choice(available_chars) for _ in range(remaining_length))
     else:
-        # Use counts to determine the exact number of each character type
         for char_type, count in counts.items():
             if count > 0:
-                # Filter pool to exclude unwanted characters
                 filtered_pool = ''.join(c for c in pools[char_type] if c not in exclude_chars)
                 if filtered_pool:
                     password_chars.extend(secrets_generator.choice(filtered_pool) for _ in range(count))
-    # Shuffle the characters and add prefix and suffix
     random.shuffle(password_chars)
     password = f"{prefix}{''.join(password_chars)}{suffix}"
-    # Ensure the password meets the total length requirement
     if total_length > 0 and len(password) < total_length:
         additional_chars = [secrets_generator.choice(available_chars) for _ in range(total_length - len(password))]
         password += ''.join(additional_chars)
@@ -113,20 +102,42 @@ def evaluate_password_strength(password):
         score += 20
     if length >= 20:
         score += 20
-    return min(score, 100)  # Ensure the score does not exceed 100%
+    return min(score, 100)
+
+def colorize_strength(strength):
+    """Colorize the strength value based on the percentage."""
+    if strength >= 80:
+        return colored(f"{strength}%", 'green')
+    elif strength >= 50:
+        return colored(f"{strength}%", 'yellow')
+    else:
+        return colored(f"{strength}%", 'red')
+
+def print_colored_status(status_type, message):
+    """Print a status message with color: [+] green or [-] red."""
+    if status_type == '[+]':
+        print(colored("[+]", 'green') + " " + message)
+    elif status_type == '[-]':
+        print(colored("[-]", 'red') + " " + message)
 
 def parse_arguments():
     """Parse command-line arguments."""
     print(banner)
     parser = argparse.ArgumentParser(
-        prog='PassForge',
-        description='Advanced Password Generator that generates customizable passwords with sophisticated options.'
+        prog='Hifu',
+        description="""Advanced Password Generator that creates highly customizable and secure passwords tailored to your needs. 
+    Hifu allows you to specify complex options such as password length, inclusion of special characters, numbers, 
+    uppercase and lowercase letters, and even custom patterns. It is designed to generate passwords that are both 
+    strong and unique, providing enhanced security for your accounts. With the flexibility to configure multiple 
+    parameters, this password generator ensures that you can meet specific requirements for different platforms, 
+    applications, or security standards."""
     )
     parser.add_argument("-n", "--numbers", default=0, type=validate_positive_int, help="Number of digits in the password")
     parser.add_argument("-l", "--lowercase", default=0, type=validate_positive_int, help="Number of lowercase characters in the password")
     parser.add_argument("-u", "--uppercase", default=0, type=validate_positive_int, help="Number of uppercase characters in the password")
     parser.add_argument("-s", "--special-chars", default=0, type=validate_positive_int, help="Number of special characters in the password")
     parser.add_argument("-a", "--amount", default=1, type=validate_positive_int, help="Number of passwords to generate")
+    parser.add_argument("-r", "--regex", default='', type=str, help="Regex pattern for generating passwords")
     parser.add_argument("-o", "--output-file", help="File to write the generated passwords to")
     parser.add_argument("--output-format", choices=['txt', 'json'], default='txt', help="Format of the output file (txt or json)")
     parser.add_argument("--exclude-chars", default='', type=str, help="Characters to exclude from the password")
@@ -143,11 +154,9 @@ def parse_arguments():
 
 def main():
     args = parse_arguments()
-    if args.custom and (args.amount > 1 or args.prefix or args.suffix or args.numbers > 0 or
-            args.lowercase > 0 or args.uppercase > 0 or args.special_chars > 0 or
-            args.total_length > 0 or args.exclude_chars or args.output_file or
-            args.seed is not None):
-        print("[-] All parameters cannot be applied in customized password.")
+    if args.regex and (args.custom or args.numbers > 0 or args.lowercase > 0 or
+            args.uppercase > 0 or args.special_chars > 0 or args.total_length > 0):
+        print_colored_status('[-]', "Regex cannot be combined with other generation options.")
         sys.exit(1)
     if args.seed is not None:
         random.seed(args.seed)
@@ -160,8 +169,7 @@ def main():
         'uppercase': string.ascii_uppercase if args.uppercase > 0 else '',
         'special': string.punctuation if args.special_chars > 0 else ''
     }
-    # Ensure at least one pool is included
-    if not any(pools.values()) and not args.custom:
+    if not any(pools.values()) and not args.custom and not args.regex:
         pools = {
             'digits': string.digits,
             'lowercase': string.ascii_lowercase,
@@ -185,15 +193,16 @@ def main():
                 args.suffix,
                 args.total_length,
                 secrets_generator,
-                args.custom
+                args.custom,
+                regex=args.regex
             )
-            # Evaluate password strength
             strength = evaluate_password_strength(password)
-            passwords.append(f"{password} ({strength:.1f}%)")
+            colorized_strength = colorize_strength(strength)
+            passwords.append(f"{password} ({colorized_strength})")
         except ValueError as e:
-            print(f"Error generating password: {e}", file=sys.stderr)
+            print_colored_status('[-]', f"Error generating password: {e}")
             sys.exit(1)
-    print("[+] Generated Passwords:")
+    print_colored_status('[+]', "Generated Passwords:")
     output = '\n'.join(passwords)
     if args.output_file:
         expected_extension = f".{args.output_format}"

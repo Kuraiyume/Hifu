@@ -11,6 +11,7 @@ Hifu is an advanced password generation tool designed to provide users with high
 - Convert custom names to leet speak.
 - Output passwords in plain text or JSON format.
 - Evaluate and display password strength as a percentage.
+- Includes the ability to check whether your current password has appeared in any known data breaches.
 
 ## Installation
 

@@ -40,13 +40,13 @@ Hifu is an advanced password generation tool designed to provide users with high
                 :      :/ Kura1yume
                        :v0.4
 
-usage: Hifu [-h] [-n NUMBERS] [-l LOWERCASE] [-u UPPERCASE] [-s SPECIAL_CHARS] [-a AMOUNT] [-r REGEX] [-o OUTPUT_FILE] [--output-format {txt,json}] [--exclude-chars EXCLUDE_CHARS]
-            [--prefix PREFIX] [--suffix SUFFIX] [--total-length TOTAL_LENGTH] [--seed SEED] [--custom CUSTOM]
+usage: Hifu [-h] [-n NUMBERS] [-l LOWERCASE] [-u UPPERCASE] [-s SPECIAL_CHARS] [-a AMOUNT] [-r REGEX] [-o OUTPUT_FILE] [-pfix PREFIX] [-sfix SUFFIX]
+            [-t TOTAL_LENGTH] [-c CUSTOM] [-p PASSWORD] [--check-if-pwned] [--seed SEED] [--output-format {txt,json}] [--exclude-chars EXCLUDE_CHARS]
 
-Advanced Password Generator that creates highly customizable and secure passwords tailored to your needs. Hifu allows you to specify complex options such as password length, inclusion of
-special characters, numbers, uppercase and lowercase letters, and even custom patterns. It is designed to generate passwords that are both strong and unique, providing enhanced security
-for your accounts. With the flexibility to configure multiple parameters, this password generator ensures that you can meet specific requirements for different platforms, applications,
-or security standards.
+Advanced Password Generator that creates highly customizable and secure passwords tailored to your needs. Hifu allows you to specify complex options such
+as password length, inclusion of special characters, numbers, uppercase and lowercase letters, and even custom patterns. It is designed to generate
+passwords that are both strong and unique, providing enhanced security for your accounts. With the flexibility to configure multiple parameters, this
+password generator ensures that you can meet specific requirements for different platforms, applications, or security standards.
 
 options:
   -h, --help            show this help message and exit
@@ -64,16 +64,22 @@ options:
                         Regex pattern for generating passwords
   -o OUTPUT_FILE, --output-file OUTPUT_FILE
                         File to write the generated passwords to
+  -pfix PREFIX, --prefix PREFIX
+                        Prefix to add to each password
+  -sfix SUFFIX, --suffix SUFFIX
+                        Suffix to add to each password
+  -t TOTAL_LENGTH, --total-length TOTAL_LENGTH
+                        Total length of the password (including prefix and suffix) If 0, use specified counts
+  -c CUSTOM, --custom CUSTOM
+                        Custom name for the password with leet speak conversion
+  -p PASSWORD, --password PASSWORD
+                        Specify password for checking if the password is breached
+  --check-if-pwned      Check if the password from '--password' is breached
+  --seed SEED           Seed for randomization to allow reproducible results
   --output-format {txt,json}
                         Format of the output file (txt or json)
   --exclude-chars EXCLUDE_CHARS
                         Characters to exclude from the password
-  --prefix PREFIX       Prefix to add to each password
-  --suffix SUFFIX       Suffix to add to each password
-  --total-length TOTAL_LENGTH
-                        Total length of the password (including prefix and suffix) If 0, use specified counts
-  --seed SEED           Seed for randomization to allow reproducible results
-  --custom CUSTOM       Custom name for the password with leet speak conversion
 ```
 ## Usage
 
@@ -118,6 +124,11 @@ options:
    ```
    *This generates passwords and saves them to passwords.txt in plain text format. You can also use json format.*
 
+8. Check password if existing in breaches
+   ```bash
+   python3 hifu.py -p bash --check-if-pwned
+   ```
+   
 ## License
 
 - This project is licensed under the MIT License

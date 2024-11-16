@@ -126,7 +126,7 @@ options:
 
 8. Check password if existing in breaches
    ```bash
-   python3 hifu.py -p bash --check-if-pwned
+   hifu -p bash --check-if-pwned
    ```
    
 ## License
